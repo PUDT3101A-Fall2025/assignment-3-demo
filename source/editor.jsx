@@ -22,11 +22,23 @@ function Editor({ }) {
   let [title, setTitle] = useState("My Color Scheme");
   let [colors, setColors] = useState(defaultColors);
 
-  let swatches = [];
+  let [shuffle, setShuffle] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("color-scheme", JSON.stringify(colors));
   }, [colors]);
+
+  useEffect(() => {
+    if (shuffle) {
+      let cancel = setInterval(() => {
+        setColors(oldColors => oldColors.map(() => randomColor()))
+      }, 500);
+
+      return () => { clearInterval(cancel) };
+    }
+  }, [shuffle]);
+
+  let swatches = [];
 
   for (let i = 0; i < colors.length; ++i) {
     let color = colors[i];
@@ -42,10 +54,11 @@ function Editor({ }) {
 
   return <div id="editor">
     <input type="text" value={title} onChange={(event) => setTitle(event.target.value)}></input>
+    <button onClick={() => setShuffle(!shuffle)}>{ shuffle ? "Stop Shuffling" : "Shuffle" }</button>
     <div className="scheme">
       {swatches}
       {(colors.length < 6) ? <button className="new-swatch" onClick={
-        () => setColors(colors.toSpliced(colors.length, 0, "#000000"))
+        () => setColors(colors.toSpliced(colors.length, 0, randomColor()))
       }>+</button> : null}
     </div>
   </div>;
@@ -63,4 +76,9 @@ function Swatch({ color, onDelete, onColorChange, canBeDeleted }) {
       onChange={(event) => onColorChange(event.target.value)}>  
     </input>
   </div>
+}
+
+function randomColor() {
+  let value = Math.floor(Math.random() * 16777215).toString(16);
+  return `#${value.padStart(6, '0')}`;
 }
